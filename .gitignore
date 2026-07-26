@@ -5,6 +5,11 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .coverage
+node_modules/
+.next/
+.open-next/
+.wrangler/
+*.tsbuildinfo
 
 # Local configuration and credentials
 config/settings.json

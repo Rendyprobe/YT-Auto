@@ -1,0 +1,59 @@
+{
+  "generatedAt": "2026-07-26T10:54:27.903297Z",
+  "jobs": [
+    {
+      "contentId": "04d1e07f9bd7",
+      "durations": {
+        "optionA": null,
+        "optionB": null
+      },
+      "errorMessage": null,
+      "failedStep": null,
+      "media": {
+        "audioAUrl": null,
+        "audioBUrl": null,
+        "privacy": null,
+        "videoUrl": null,
+        "youtubeUrl": null,
+        "youtubeVideoId": null
+      },
+      "optionA": "Explore space",
+      "optionB": "Explore the deep ocean",
+      "percentageA": 58.0,
+      "percentageB": 42.0,
+      "sourceRow": 2,
+      "status": "audio_ready",
+      "topic": "Would you rather explore space or the deep ocean?",
+      "updatedAt": "2026-07-26T10:17:21.866056Z",
+      "voice": "en-US-AriaNeural"
+    },
+    {
+      "contentId": "21dd8f80ecec",
+      "durations": {
+        "optionA": null,
+        "optionB": null
+      },
+      "errorMessage": null,
+      "failedStep": null,
+      "media": {
+        "audioAUrl": null,
+        "audioBUrl": null,
+        "privacy": null,
+        "videoUrl": null,
+        "youtubeUrl": null,
+        "youtubeVideoId": null
+      },
+      "optionA": "Fly",
+      "optionB": "Become invisible",
+      "percentageA": 65.0,
+      "percentageB": 35.0,
+      "sourceRow": 3,
+      "status": "pending",
+      "topic": "Would you rather fly or become invisible?",
+      "updatedAt": null,
+      "voice": null
+    }
+  ],
+  "schemaVersion": 1,
+  "source": "github-snapshot"
+}
