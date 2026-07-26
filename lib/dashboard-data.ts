@@ -8,6 +8,8 @@ import {
   PIPELINE_STAGES,
   PipelineStatus,
 } from "@/lib/dashboard-types";
+import { getPipelineRoot } from "@/lib/pipeline-root";
+import { localControlEnabled, readLocalQueueSync } from "@/lib/queue-store";
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -130,17 +132,41 @@ function overlayLiveJob(
   };
 }
 
-export function getPipelineRoot(): string {
-  return process.env.PIPELINE_ROOT
-    ? path.resolve(process.env.PIPELINE_ROOT)
-    : process.cwd();
+function queueJob(
+  row: NonNullable<ReturnType<typeof readLocalQueueSync>>[number],
+  index: number,
+): DashboardJob {
+  return {
+    contentId: row.contentId,
+    sourceRow: index + 2,
+    topic: row.topic,
+    optionA: row.optionA,
+    optionB: row.optionB,
+    percentageA: row.percentageA,
+    percentageB: row.percentageB,
+    status: "pending",
+    updatedAt: null,
+    failedStep: null,
+    errorMessage: null,
+    voice: null,
+    durations: { optionA: null, optionB: null },
+    media: {
+      audioAUrl: null,
+      audioBUrl: null,
+      videoUrl: null,
+      youtubeUrl: null,
+      youtubeVideoId: null,
+      privacy: null,
+    },
+  };
 }
 
 export function loadDashboardData(): DashboardData {
   const snapshot = bundledSnapshot as DashboardData;
   const root = getPipelineRoot();
   const statePath = path.join(root, "state", "processing_state.json");
-  if (!existsSync(statePath)) {
+  const useLocalData = localControlEnabled() || existsSync(statePath);
+  if (!useLocalData) {
     return {
       ...snapshot,
       source: "bundled-snapshot",
@@ -148,13 +174,17 @@ export function loadDashboardData(): DashboardData {
   }
 
   try {
-    const state = readJson(statePath);
+    const state = existsSync(statePath) ? readJson(statePath) : {};
     const jobs = asRecord(state.jobs);
+    const queueRows = readLocalQueueSync();
+    const baseJobs = queueRows
+      ? queueRows.map(queueJob)
+      : snapshot.jobs;
     return {
       schemaVersion: 1,
       generatedAt: new Date().toISOString(),
       source: "local",
-      jobs: snapshot.jobs.map((job) =>
+      jobs: baseJobs.map((job) =>
         overlayLiveJob(job, asRecord(jobs[job.contentId]), root),
       ),
     };

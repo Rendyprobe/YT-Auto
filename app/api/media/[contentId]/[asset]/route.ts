@@ -3,7 +3,7 @@ import { stat } from "node:fs/promises";
 import path from "node:path";
 import { Readable } from "node:stream";
 
-import { getPipelineRoot } from "@/lib/dashboard-data";
+import { getPipelineRoot } from "@/lib/pipeline-root";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

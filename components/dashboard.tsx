@@ -8,6 +8,9 @@ import {
   PIPELINE_STAGES,
   PipelineStatus,
 } from "@/lib/dashboard-types";
+import { QueueManager } from "@/components/queue-manager";
+import { VideoLibrary } from "@/components/video-library";
+import type { QueueData } from "@/lib/queue-store";
 
 const REMOTE_SNAPSHOT =
   "https://raw.githubusercontent.com/Rendyprobe/YT-Auto/main/dashboard-data/jobs.json";
@@ -29,6 +32,7 @@ const FINISHED_STATUSES = new Set<PipelineStatus>([
   "video_ready",
   "uploaded",
 ]);
+type DashboardView = "overview" | "queue" | "videos";
 
 function formatDate(value: string | null) {
   if (!value) return "Not started";
@@ -182,7 +186,16 @@ function JobCard({
   );
 }
 
-export function Dashboard({ initialData }: { initialData: DashboardData }) {
+export function Dashboard({
+  initialData,
+  initialQueue,
+  initialView,
+}: {
+  initialData: DashboardData;
+  initialQueue: QueueData | null;
+  initialView: DashboardView;
+}) {
+  const [activeView, setActiveView] = useState<DashboardView>(initialView);
   const [data, setData] = useState(initialData);
   const [selectedId, setSelectedId] = useState(
     initialData.jobs[0]?.contentId ?? "",
@@ -224,10 +237,31 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
   }
 
   useEffect(() => {
+    const requestedView = new URLSearchParams(window.location.search).get(
+      "view",
+    );
+    if (
+      requestedView === "queue" ||
+      requestedView === "videos" ||
+      requestedView === "overview"
+    ) {
+      setActiveView(requestedView);
+    }
     void refresh();
     const timer = window.setInterval(() => void refresh(), 30_000);
     return () => window.clearInterval(timer);
   }, []);
+
+  function selectView(view: DashboardView) {
+    setActiveView(view);
+    const url = new URL(window.location.href);
+    if (view === "overview") {
+      url.searchParams.delete("view");
+    } else {
+      url.searchParams.set("view", view);
+    }
+    window.history.replaceState({}, "", url);
+  }
 
   const filteredJobs = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -259,13 +293,41 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
   return (
     <main>
       <header className="topbar">
-        <a className="brand" href="#" aria-label="YT Auto home">
+        <button
+          className="brand brand-button"
+          type="button"
+          aria-label="YT Auto home"
+          onClick={() => selectView("overview")}
+        >
           <span className="brand-mark">Y/A</span>
           <span>
             <b>YT AUTO</b>
             <small>PIPELINE CONSOLE</small>
           </span>
-        </a>
+        </button>
+        <nav className="topnav" aria-label="Dashboard sections">
+          <button
+            className={activeView === "overview" ? "active" : ""}
+            type="button"
+            onClick={() => selectView("overview")}
+          >
+            Overview
+          </button>
+          <button
+            className={activeView === "queue" ? "active" : ""}
+            type="button"
+            onClick={() => selectView("queue")}
+          >
+            Queue editor
+          </button>
+          <button
+            className={activeView === "videos" ? "active" : ""}
+            type="button"
+            onClick={() => selectView("videos")}
+          >
+            Video library
+          </button>
+        </nav>
         <div className="topbar-right">
           <span className={`source-badge source-${data.source}`}>
             <i />
@@ -283,49 +345,55 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
       </header>
 
       <div className="shell">
-        <section className="hero">
-          <div>
-            <p className="eyebrow">FACELESS SHORTS / OPERATIONS</p>
-            <h1>
-              Every prompt.
-              <br />
-              <span>Every frame.</span> Accounted for.
-            </h1>
-          </div>
-          <div className="hero-meta">
-            <span>Auto-refresh / 30s</span>
-            <button onClick={() => void refresh()} disabled={refreshing}>
-              {refreshing ? "SYNCING…" : "SYNC NOW ↻"}
-            </button>
-            <small>Last check {formatDate(lastRefresh.toISOString())}</small>
-            {refreshError && <small className="refresh-error">{refreshError}</small>}
-          </div>
-        </section>
+        {activeView === "overview" ? (
+          <>
+            <section className="hero">
+              <div>
+                <p className="eyebrow">FACELESS SHORTS / OPERATIONS</p>
+                <h1>
+                  Every prompt.
+                  <br />
+                  <span>Every frame.</span> Accounted for.
+                </h1>
+              </div>
+              <div className="hero-meta">
+                <span>Auto-refresh / 30s</span>
+                <button onClick={() => void refresh()} disabled={refreshing}>
+                  {refreshing ? "SYNCING…" : "SYNC NOW ↻"}
+                </button>
+                <small>Last check {formatDate(lastRefresh.toISOString())}</small>
+                {refreshError && (
+                  <small className="refresh-error">{refreshError}</small>
+                )}
+              </div>
+            </section>
 
-        <section className="metrics" aria-label="Pipeline totals">
-          <article>
-            <span>01 / TOTAL JOBS</span>
-            <strong>{String(data.jobs.length).padStart(2, "0")}</strong>
-            <small>CSV rows tracked</small>
-          </article>
-          <article>
-            <span>02 / VIDEO READY</span>
-            <strong>{String(videoReady).padStart(2, "0")}</strong>
-            <small>Ready to review</small>
-          </article>
-          <article>
-            <span>03 / PUBLISHED</span>
-            <strong>{String(uploaded).padStart(2, "0")}</strong>
-            <small>YouTube uploads</small>
-          </article>
-          <article className={attention ? "metric-warning" : ""}>
-            <span>04 / ATTENTION</span>
-            <strong>{String(attention).padStart(2, "0")}</strong>
-            <small>{attention ? "Action required" : "All systems nominal"}</small>
-          </article>
-        </section>
+            <section className="metrics" aria-label="Pipeline totals">
+              <article>
+                <span>01 / TOTAL JOBS</span>
+                <strong>{String(data.jobs.length).padStart(2, "0")}</strong>
+                <small>CSV rows tracked</small>
+              </article>
+              <article>
+                <span>02 / VIDEO READY</span>
+                <strong>{String(videoReady).padStart(2, "0")}</strong>
+                <small>Ready to review</small>
+              </article>
+              <article>
+                <span>03 / PUBLISHED</span>
+                <strong>{String(uploaded).padStart(2, "0")}</strong>
+                <small>YouTube uploads</small>
+              </article>
+              <article className={attention ? "metric-warning" : ""}>
+                <span>04 / ATTENTION</span>
+                <strong>{String(attention).padStart(2, "0")}</strong>
+                <small>
+                  {attention ? "Action required" : "All systems nominal"}
+                </small>
+              </article>
+            </section>
 
-        <section className="workspace">
+            <section className="workspace">
           <div className="queue-panel">
             <div className="section-heading">
               <div>
@@ -448,7 +516,34 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
           ) : (
             <aside className="inspector empty-list">No job selected.</aside>
           )}
-        </section>
+            </section>
+          </>
+        ) : (
+          <section className="section-intro">
+            <p className="eyebrow">
+              {activeView === "queue"
+                ? "PLAN THE NEXT SHORTS"
+                : "REVIEW FINISHED OUTPUT"}
+            </p>
+            <h1>
+              {activeView === "queue" ? "Control the queue." : "Watch the cut."}
+            </h1>
+            <p>
+              {activeView === "queue"
+                ? "Edit the exact CSV source and decide which question is produced first."
+                : "Final MP4 files and YouTube uploads appear here when rendering is complete."}
+            </p>
+          </section>
+        )}
+
+        {activeView === "queue" && (
+          <QueueManager
+            initialQueue={initialQueue}
+            jobs={data.jobs}
+            onSaved={() => void refresh()}
+          />
+        )}
+        {activeView === "videos" && <VideoLibrary jobs={data.jobs} />}
 
         <footer>
           <span>YT AUTO / RENDYPROBE</span>
