@@ -1,0 +1,27 @@
+# Local Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+
+# Local configuration and credentials
+config/settings.json
+credentials/client_secret.json
+credentials/token.json
+
+# Runtime state and generated artifacts
+state/
+output/
+logs/
+
+# Temporary files
+*.tmp
+*.part
+
+# Editor and operating-system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
