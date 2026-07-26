@@ -10,6 +10,8 @@
     "start": "next start",
     "build": "next build",
     "build:cloudflare": "opennextjs-cloudflare build",
+    "bundle:sites": "npx --yes node@22 node_modules/wrangler/bin/wrangler.js deploy --dry-run --outdir .sites-worker && cp .sites-worker/worker.js .open-next/worker.js",
+    "build:sites": "npm run build:cloudflare && npm run bundle:sites",
     "preview:cloudflare": "opennextjs-cloudflare preview",
     "typecheck": "tsc --noEmit"
   },

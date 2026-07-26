@@ -9,6 +9,7 @@ node_modules/
 .next/
 .open-next/
 .wrangler/
+.sites-worker/
 *.tsbuildinfo
 .env
 .env.local
